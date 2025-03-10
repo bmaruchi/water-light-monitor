@@ -1,14 +1,12 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Calculator, Droplet } from "lucide-react";
-import { cn } from '@/lib/utils';
+import { CalendarIcon, Droplet } from "lucide-react";
 import ConsumptionChart from './ConsumptionChart';
 import { 
   calculateWaterConsumption,
@@ -16,34 +14,28 @@ import {
   calculateEstimatedWaterConsumption,
   formatNumber
 } from '@/lib/calculations';
-import { toast } from 'sonner';
 
 const WaterTab: React.FC = () => {
-  const [date, setDate] = useState<Date>(new Date());
+  const [previousDate, setPreviousDate] = useState<Date>(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [reading, setReading] = useState<string>('');
-  const [previousReading, setPreviousReading] = useState<string>('120');
-  const [daysSinceLastReading, setDaysSinceLastReading] = useState<string>('30');
+  const [previousReading, setPreviousReading] = useState<string>('');
 
-  const calculateValues = () => {
-    if (!reading || parseFloat(reading) < parseFloat(previousReading)) {
-      toast.error("Por favor, insira uma leitura válida maior que a anterior.");
-      return;
-    }
-
-    toast.success("Cálculos realizados com sucesso!");
-  };
+  const daysSinceLastReading = Math.ceil(
+    (currentDate.getTime() - previousDate.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
   const consumption = reading && previousReading 
     ? calculateWaterConsumption(parseFloat(reading), parseFloat(previousReading))
-    : 0;
+    : null;
     
   const dailyConsumption = consumption && daysSinceLastReading 
-    ? calculateDailyConsumption(consumption, parseFloat(daysSinceLastReading))
-    : 0;
+    ? calculateDailyConsumption(consumption, daysSinceLastReading)
+    : null;
     
   const estimatedMonthlyConsumption = dailyConsumption 
     ? calculateEstimatedWaterConsumption(dailyConsumption)
-    : 0;
+    : null;
 
   return (
     <div className="space-y-6">
@@ -60,9 +52,10 @@ const WaterTab: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            {/* Previous Reading Date and Value */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="reading-date">Data da Leitura</Label>
+                <Label htmlFor="previous-date">Data da Leitura Anterior</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -70,43 +63,18 @@ const WaterTab: React.FC = () => {
                       className="w-full justify-start text-left font-normal input-water"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "dd/MM/yyyy") : "Selecione uma data"}
+                      {previousDate ? format(previousDate, "dd/MM/yyyy") : "Selecione uma data"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={date}
-                      onSelect={(date) => date && setDate(date)}
-                      className={cn("p-3 pointer-events-auto")}
+                      selected={previousDate}
+                      onSelect={(date) => date && setPreviousDate(date)}
+                      className="rounded-md border"
                     />
                   </PopoverContent>
                 </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="days-since-last">Dias desde última leitura</Label>
-                <Input
-                  id="days-since-last"
-                  type="number"
-                  placeholder="30"
-                  value={daysSinceLastReading}
-                  onChange={(e) => setDaysSinceLastReading(e.target.value)}
-                  className="input-water"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-reading">Leitura Atual (m³)</Label>
-                <Input
-                  id="current-reading"
-                  type="number"
-                  placeholder="130"
-                  value={reading}
-                  onChange={(e) => setReading(e.target.value)}
-                  className="input-water"
-                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="previous-reading">Leitura Anterior (m³)</Label>
@@ -121,12 +89,42 @@ const WaterTab: React.FC = () => {
               </div>
             </div>
 
-            <Button 
-              onClick={calculateValues}
-              className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-            >
-              <Calculator className="mr-2 h-4 w-4" /> Calcular
-            </Button>
+            {/* Current Reading Date and Value */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-date">Data da Leitura Atual</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal input-water"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {currentDate ? format(currentDate, "dd/MM/yyyy") : "Selecione uma data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={currentDate}
+                      onSelect={(date) => date && setCurrentDate(date)}
+                      className="rounded-md border"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="current-reading">Leitura Atual (m³)</Label>
+                <Input
+                  id="current-reading"
+                  type="number"
+                  placeholder="130"
+                  value={reading}
+                  onChange={(e) => setReading(e.target.value)}
+                  className="input-water"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -144,21 +142,34 @@ const WaterTab: React.FC = () => {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Consumo Atual</p>
-                <p className="text-2xl font-bold">{formatNumber(consumption)} m³</p>
+                <p className="text-2xl font-bold">
+                  {consumption ? `${formatNumber(consumption)} m³` : "Falta de dados"}
+                </p>
               </div>
               <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Dias desde última leitura</p>
+                <p className="text-2xl font-bold">{daysSinceLastReading}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Consumo Diário</p>
-                <p className="text-2xl font-bold">{formatNumber(dailyConsumption, 3)} m³</p>
+                <p className="text-2xl font-bold">
+                  {dailyConsumption ? `${formatNumber(dailyConsumption, 3)} m³` : "Falta de dados"}
+                </p>
               </div>
             </div>
 
             <div className="pt-4">
               <p className="text-sm text-muted-foreground mb-1">Previsão para 30 dias</p>
               <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {formatNumber(estimatedMonthlyConsumption)} m³
+                {estimatedMonthlyConsumption 
+                  ? `${formatNumber(estimatedMonthlyConsumption)} m³` 
+                  : "Falta de dados"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Baseado no consumo diário atual por 30 dias
+                Baseado no consumo diário atual
               </p>
             </div>
 
