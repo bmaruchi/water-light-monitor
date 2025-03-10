@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -233,6 +232,3 @@ const DashboardOverview: React.FC = () => {
 };
 
 export default DashboardOverview;
-
-// Import ChartLineIcon at the top of the file
-import { ChartLineIcon } from "lucide-react";
