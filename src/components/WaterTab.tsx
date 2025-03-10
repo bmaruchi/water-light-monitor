@@ -144,7 +144,7 @@ const WaterTab: React.FC = () => {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Consumo Atual</p>
                 <p className="text-2xl font-bold">
-                  {consumption ? `${formatNumber(consumption)} m³` : "Falta de dados"}
+                  {consumption ? `${formatNumber(consumption)} m³` : "falta dados"}
                 </p>
               </div>
               <div className="space-y-1">
@@ -157,7 +157,7 @@ const WaterTab: React.FC = () => {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Consumo Diário</p>
                 <p className="text-2xl font-bold">
-                  {dailyConsumption ? `${formatNumber(dailyConsumption, 3)} m³` : "Falta de dados"}
+                  {dailyConsumption ? `${formatNumber(dailyConsumption, 3)} m³` : "falta dados"}
                 </p>
               </div>
             </div>
@@ -167,7 +167,7 @@ const WaterTab: React.FC = () => {
               <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                 {estimatedMonthlyConsumption 
                   ? `${formatNumber(estimatedMonthlyConsumption)} m³` 
-                  : "Falta de dados"}
+                  : "falta dados"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Baseado no consumo diário atual

@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Droplet, LightbulbIcon, Zap, TrendingDown, ChartLineIcon, Gauge } from 'lucide-react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Droplet, LightbulbIcon, Zap, TrendingDown, Gauge } from 'lucide-react';
 import { formatCurrency, formatNumber, getLastMonths, getRandomData } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 
@@ -17,16 +18,7 @@ const DashboardOverview: React.FC = () => {
     name: month,
     value: getRandomData(1, 8, 20)[0]
   }));
-
-  const pieData = [
-    { name: 'Iluminação', value: 35 },
-    { name: 'Refrigerador', value: 25 },
-    { name: 'Ar Condicionado', value: 20 },
-    { name: 'Outros', value: 20 },
-  ];
   
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
   // Get current month values
   const currentElectricity = electricityData[electricityData.length - 1].value;
   const previousElectricity = electricityData[electricityData.length - 2].value;
@@ -146,52 +138,7 @@ const DashboardOverview: React.FC = () => {
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl flex items-center gap-2">
-              <LightbulbIcon className="h-5 w-5 text-yellow-500" />
-              Distribuição do Consumo
-            </CardTitle>
-            <CardDescription>
-              Como a energia é utilizada em sua residência
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`${value}%`, 'Porcentagem']} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Uso mais eficiente</p>
-                <p className="text-base font-medium text-green-600 dark:text-green-400">Refrigerador novo</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Potencial economia</p>
-                <p className="text-base font-medium text-green-600 dark:text-green-400">{formatCurrency(85.40)}/mês</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xl flex items-center gap-2">

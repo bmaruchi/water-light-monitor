@@ -200,7 +200,7 @@ const ElectricityTab: React.FC = () => {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Consumo Atual</p>
                 <p className="text-2xl font-bold">
-                  {consumption ? `${formatNumber(consumption)} kWh` : "Falta de dados"}
+                  {consumption ? `${formatNumber(consumption)} kWh` : "falta dados"}
                 </p>
               </div>
               <div className="space-y-1">
@@ -213,7 +213,7 @@ const ElectricityTab: React.FC = () => {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Consumo Diário</p>
                 <p className="text-2xl font-bold">
-                  {dailyConsumption ? `${formatNumber(dailyConsumption)} kWh` : "Falta de dados"}
+                  {dailyConsumption ? `${formatNumber(dailyConsumption)} kWh` : "falta dados"}
                 </p>
               </div>
               <div className="space-y-1">
@@ -227,7 +227,7 @@ const ElectricityTab: React.FC = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-1">Previsão para 30 dias</p>
               <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
-                {estimatedCost ? formatCurrency(estimatedCost) : "Falta de dados"}
+                {estimatedCost ? formatCurrency(estimatedCost) : "falta dados"}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Baseado no consumo diário atual
