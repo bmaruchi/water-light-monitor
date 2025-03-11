@@ -1,8 +1,9 @@
 
 import React from 'react';
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import TabsContainer from "@/components/TabsContainer";
-import { UserButton } from '@clerk/clerk-react';
+import { Droplet, Zap } from 'lucide-react';
 
 const Index = () => {
   return (
@@ -19,8 +20,15 @@ const Index = () => {
                 Acompanhe e gerencie o consumo de energia elétrica e água
               </p>
             </div>
-            <div>
-              <UserButton afterSignOutUrl="/sign-in" />
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex items-center gap-2">
+                <Droplet className="h-4 w-4 text-blue-500" />
+                <span>Registrar Água</span>
+              </Button>
+              <Button className="bg-amber-500 hover:bg-amber-600 flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                <span>Registrar Energia</span>
+              </Button>
             </div>
           </div>
         </header>

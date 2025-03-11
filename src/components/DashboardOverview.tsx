@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Droplet, Zap, TrendingDown, Gauge } from 'lucide-react';
-import { formatNumber, getLastMonths, getRandomData } from '@/lib/calculations';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Droplet, LightbulbIcon, Zap, TrendingDown, Gauge } from 'lucide-react';
+import { formatCurrency, formatNumber, getLastMonths, getRandomData } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
 
 const DashboardOverview: React.FC = () => {
@@ -155,6 +155,7 @@ const DashboardOverview: React.FC = () => {
                 <h3 className="font-medium text-green-700 dark:text-green-400 mb-2">Dicas para economia de energia</h3>
                 <ul className="text-sm space-y-2 list-disc pl-5">
                   <li>Substitua lâmpadas incandescentes por LED (economia de até 80%)</li>
+                  <li>Desligue aparelhos da tomada quando não estiverem em uso</li>
                   <li>Utilize o ar-condicionado a 23°C (temperatura ideal)</li>
                   <li>Mantenha filtros de ar-condicionado limpos</li>
                 </ul>

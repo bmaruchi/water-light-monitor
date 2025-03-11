@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Zap } from "lucide-react";
-import { Button } from '@/components/ui/button';
+import { CalendarIcon, Calculator, Zap } from "lucide-react";
+import { cn } from '@/lib/utils';
 import ConsumptionChart from './ConsumptionChart';
 import { 
   calculateElectricityConsumption,
@@ -69,7 +70,7 @@ const ElectricityTab: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Previous Reading Date and Value - Moved to the top as requested */}
+            {/* Previous Reading Date and Value */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="previous-date">Data da Leitura Anterior</Label>
@@ -217,8 +218,7 @@ const ElectricityTab: React.FC = () => {
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Valor da Bandeira</p>
-                {/* Reduced font size for flag value */}
-                <p className="text-lg font-bold">
+                <p className="text-2xl font-bold">
                   {`R$ ${flagValues[flagType].value.toFixed(5)}/kWh`}
                 </p>
               </div>
@@ -238,6 +238,7 @@ const ElectricityTab: React.FC = () => {
               <p className="text-sm font-medium">Dicas de Economia:</p>
               <ul className="text-sm text-muted-foreground list-disc pl-5 pt-2 space-y-1">
                 <li>Substitua lâmpadas por modelos LED</li>
+                <li>Desligue aparelhos em modo standby</li>
                 <li>Utilize ar-condicionado em temperatura moderada</li>
               </ul>
             </div>
