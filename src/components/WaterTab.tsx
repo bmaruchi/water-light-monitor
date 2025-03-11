@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon, Droplet } from "lucide-react";
 import ConsumptionChart from './ConsumptionChart';
+import ReportActions from './ReportActions';
 import { 
   calculateWaterConsumption,
   calculateDailyConsumption,
@@ -37,6 +37,10 @@ const WaterTab: React.FC = () => {
   const estimatedMonthlyConsumption = dailyConsumption 
     ? calculateEstimatedWaterConsumption(dailyConsumption)
     : null;
+
+  // Get the current month and year for the report
+  const currentMonthName = format(currentDate, 'MMMM');
+  const currentYear = currentDate.getFullYear();
 
   return (
     <div className="space-y-6">
@@ -183,6 +187,18 @@ const WaterTab: React.FC = () => {
                 <li>Feche a torneira ao escovar os dentes</li>
               </ul>
             </div>
+
+            {/* Report Actions */}
+            {consumption && dailyConsumption && (
+              <ReportActions
+                type="water"
+                month={currentMonthName}
+                year={currentYear}
+                consumption={consumption}
+                dailyAverage={dailyConsumption}
+                previousConsumption={previousReading ? parseFloat(previousReading) : undefined}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

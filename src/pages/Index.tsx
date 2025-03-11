@@ -3,8 +3,9 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import TabsContainer from "@/components/TabsContainer";
-import { Droplet, Zap, LogOut, User } from 'lucide-react';
+import { Droplet, Zap, LogOut, User, FileText } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,16 @@ const Index = () => {
               </p>
             </div>
             <div className="flex gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full"
+                asChild
+              >
+                <Link to="/reports" title="Relatórios">
+                  <FileText className="h-4 w-4" />
+                </Link>
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" className="rounded-full">
@@ -44,6 +55,12 @@ const Index = () => {
                   <DropdownMenuItem className="flex items-center gap-2" disabled>
                     <User className="h-4 w-4" />
                     <span>{user?.name || user?.email}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/reports" className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Relatórios</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => logout()} className="flex items-center gap-2 text-red-500">
                     <LogOut className="h-4 w-4" />

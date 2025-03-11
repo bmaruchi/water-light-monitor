@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Calculator, Zap } from "lucide-react";
 import { cn } from '@/lib/utils';
 import ConsumptionChart from './ConsumptionChart';
+import ReportActions from './ReportActions';
 import { 
   calculateElectricityConsumption,
   calculateDailyConsumption,
@@ -54,6 +54,10 @@ const ElectricityTab: React.FC = () => {
         parseFloat(publicLighting || '0')
       )
     : null;
+
+  // Get the current month and year for the report
+  const currentMonthName = format(currentDate, 'MMMM');
+  const currentYear = currentDate.getFullYear();
 
   return (
     <div className="space-y-6">
@@ -242,6 +246,19 @@ const ElectricityTab: React.FC = () => {
                 <li>Utilize ar-condicionado em temperatura moderada</li>
               </ul>
             </div>
+
+            {/* Report Actions */}
+            {consumption && dailyConsumption && (
+              <ReportActions
+                type="electricity"
+                month={currentMonthName}
+                year={currentYear}
+                consumption={consumption}
+                dailyAverage={dailyConsumption}
+                cost={estimatedCost || undefined}
+                previousConsumption={previousReading ? parseFloat(previousReading) : undefined}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
