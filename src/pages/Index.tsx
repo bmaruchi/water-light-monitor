@@ -3,9 +3,20 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import TabsContainer from "@/components/TabsContainer";
-import { Droplet, Zap } from 'lucide-react';
+import { Droplet, Zap, LogOut, User } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Index = () => {
+  const { user, logout } = useAuth();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
       <div className="container py-8 px-4 md:px-6 lg:px-8">
@@ -21,14 +32,25 @@ const Index = () => {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Droplet className="h-4 w-4 text-blue-500" />
-                <span>Registrar Água</span>
-              </Button>
-              <Button className="bg-amber-500 hover:bg-amber-600 flex items-center gap-2">
-                <Zap className="h-4 w-4" />
-                <span>Registrar Energia</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="rounded-full">
+                    <User className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="flex items-center gap-2" disabled>
+                    <User className="h-4 w-4" />
+                    <span>{user?.name || user?.email}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => logout()} className="flex items-center gap-2 text-red-500">
+                    <LogOut className="h-4 w-4" />
+                    <span>Sair</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </header>
