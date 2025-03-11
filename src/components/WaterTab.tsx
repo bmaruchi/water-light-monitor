@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,19 @@ const WaterTab: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [reading, setReading] = useState<string>('');
   const [previousReading, setPreviousReading] = useState<string>('');
+  
+  // State for editing mode
+  const [isEditing, setIsEditing] = useState<boolean>(true);
+
+  // Handle form submission when values are confirmed
+  const handleConfirmValues = () => {
+    setIsEditing(false);
+  };
+
+  // Reset to editing mode
+  const handleEditValues = () => {
+    setIsEditing(true);
+  };
 
   const daysSinceLastReading = Math.ceil(
     (currentDate.getTime() - previousDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -66,6 +80,7 @@ const WaterTab: React.FC = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start text-left font-normal input-water"
+                      disabled={!isEditing}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {previousDate ? format(previousDate, "dd/MM/yyyy") : "Selecione uma data"}
@@ -77,6 +92,7 @@ const WaterTab: React.FC = () => {
                       selected={previousDate}
                       onSelect={(date) => date && setPreviousDate(date)}
                       className="rounded-md border"
+                      disabled={!isEditing}
                     />
                   </PopoverContent>
                 </Popover>
@@ -90,6 +106,7 @@ const WaterTab: React.FC = () => {
                   value={previousReading}
                   onChange={(e) => setPreviousReading(e.target.value)}
                   className="input-water"
+                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -103,6 +120,7 @@ const WaterTab: React.FC = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start text-left font-normal input-water"
+                      disabled={!isEditing}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {currentDate ? format(currentDate, "dd/MM/yyyy") : "Selecione uma data"}
@@ -114,6 +132,7 @@ const WaterTab: React.FC = () => {
                       selected={currentDate}
                       onSelect={(date) => date && setCurrentDate(date)}
                       className="rounded-md border"
+                      disabled={!isEditing}
                     />
                   </PopoverContent>
                 </Popover>
@@ -127,8 +146,30 @@ const WaterTab: React.FC = () => {
                   value={reading}
                   onChange={(e) => setReading(e.target.value)}
                   className="input-water"
+                  disabled={!isEditing}
                 />
               </div>
+            </div>
+            
+            {/* Confirm/Edit Button */}
+            <div className="pt-4">
+              {isEditing ? (
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700" 
+                  onClick={handleConfirmValues}
+                  disabled={!reading || !previousReading}
+                >
+                  Confirmar Valores
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full" 
+                  variant="outline" 
+                  onClick={handleEditValues}
+                >
+                  Editar Valores
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -189,7 +230,7 @@ const WaterTab: React.FC = () => {
             </div>
 
             {/* Report Actions */}
-            {consumption && dailyConsumption && (
+            {consumption && dailyConsumption && !isEditing && (
               <ReportActions
                 type="water"
                 month={currentMonthName}

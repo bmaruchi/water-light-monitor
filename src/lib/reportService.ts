@@ -1,5 +1,4 @@
 
-import { useAuth } from '@/context/AuthContext';
 import { generateMonthlyReport } from './pdfGenerator';
 
 interface StoredReport {
@@ -64,3 +63,6 @@ export const generateReportFileName = (type: 'electricity' | 'water', month: str
   const typeText = type === 'electricity' ? 'energia' : 'agua';
   return `relatorio_${typeText}_${month}_${year}.pdf`;
 };
+
+// Export the StoredReport interface for use in components
+export type { StoredReport };

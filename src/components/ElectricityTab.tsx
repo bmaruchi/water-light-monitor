@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +27,7 @@ const flagValues = {
 };
 
 const ElectricityTab: React.FC = () => {
+  // State for form values
   const [previousDate, setPreviousDate] = useState<Date>(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [reading, setReading] = useState<string>('');
@@ -33,6 +35,19 @@ const ElectricityTab: React.FC = () => {
   const [kwhPrice, setKwhPrice] = useState<string>('0.70');
   const [flagType, setFlagType] = useState<keyof typeof flagValues>('green');
   const [publicLighting, setPublicLighting] = useState<string>('35.80');
+  
+  // State for editing mode
+  const [isEditing, setIsEditing] = useState<boolean>(true);
+
+  // Handle form submission when values are confirmed
+  const handleConfirmValues = () => {
+    setIsEditing(false);
+  };
+
+  // Reset to editing mode
+  const handleEditValues = () => {
+    setIsEditing(true);
+  };
 
   const daysSinceLastReading = Math.ceil(
     (currentDate.getTime() - previousDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -83,6 +98,7 @@ const ElectricityTab: React.FC = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start text-left font-normal"
+                      disabled={!isEditing}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {previousDate ? format(previousDate, "dd/MM/yyyy") : "Selecione uma data"}
@@ -94,6 +110,7 @@ const ElectricityTab: React.FC = () => {
                       selected={previousDate}
                       onSelect={(date) => date && setPreviousDate(date)}
                       className="rounded-md border"
+                      disabled={!isEditing}
                     />
                   </PopoverContent>
                 </Popover>
@@ -106,6 +123,7 @@ const ElectricityTab: React.FC = () => {
                   placeholder="1250"
                   value={previousReading}
                   onChange={(e) => setPreviousReading(e.target.value)}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -119,6 +137,7 @@ const ElectricityTab: React.FC = () => {
                     <Button
                       variant="outline"
                       className="w-full justify-start text-left font-normal"
+                      disabled={!isEditing}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {currentDate ? format(currentDate, "dd/MM/yyyy") : "Selecione uma data"}
@@ -130,6 +149,7 @@ const ElectricityTab: React.FC = () => {
                       selected={currentDate}
                       onSelect={(date) => date && setCurrentDate(date)}
                       className="rounded-md border"
+                      disabled={!isEditing}
                     />
                   </PopoverContent>
                 </Popover>
@@ -142,6 +162,7 @@ const ElectricityTab: React.FC = () => {
                   placeholder="1350"
                   value={reading}
                   onChange={(e) => setReading(e.target.value)}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -157,6 +178,7 @@ const ElectricityTab: React.FC = () => {
                   placeholder="0.70"
                   value={kwhPrice}
                   onChange={(e) => setKwhPrice(e.target.value)}
+                  disabled={!isEditing}
                 />
               </div>
               <div className="space-y-2">
@@ -168,6 +190,7 @@ const ElectricityTab: React.FC = () => {
                   placeholder="35.80"
                   value={publicLighting}
                   onChange={(e) => setPublicLighting(e.target.value)}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -180,11 +203,33 @@ const ElectricityTab: React.FC = () => {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={flagType}
                 onChange={(e) => setFlagType(e.target.value as keyof typeof flagValues)}
+                disabled={!isEditing}
               >
                 {Object.entries(flagValues).map(([key, { name }]) => (
                   <option key={key} value={key}>{name}</option>
                 ))}
               </select>
+            </div>
+            
+            {/* Confirm/Edit Button */}
+            <div className="pt-4">
+              {isEditing ? (
+                <Button 
+                  className="w-full bg-amber-600 hover:bg-amber-700" 
+                  onClick={handleConfirmValues}
+                  disabled={!reading || !previousReading}
+                >
+                  Confirmar Valores
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full" 
+                  variant="outline" 
+                  onClick={handleEditValues}
+                >
+                  Editar Valores
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -248,7 +293,7 @@ const ElectricityTab: React.FC = () => {
             </div>
 
             {/* Report Actions */}
-            {consumption && dailyConsumption && (
+            {consumption && dailyConsumption && !isEditing && (
               <ReportActions
                 type="electricity"
                 month={currentMonthName}
