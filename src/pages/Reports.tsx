@@ -28,7 +28,7 @@ const Reports: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      const userReports = getUserReports(user.uid);
+      const userReports = getUserReports(user.id); // Updated from user.uid to user.id
       setReports(userReports);
     }
   }, [user]);

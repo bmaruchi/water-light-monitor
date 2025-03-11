@@ -81,7 +81,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
       const pdfData = doc.output('datauristring').split(',')[1];
       
       saveReport({
-        userId: user.uid,
+        userId: user.id, // Updated from user.uid to user.id
         type,
         month,
         year,
