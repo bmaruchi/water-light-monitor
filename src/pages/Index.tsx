@@ -6,6 +6,7 @@ import TabsContainer from "@/components/TabsContainer";
 import { Droplet, Zap, LogOut, User, FileText } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Link } from 'react-router-dom';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ const Index = () => {
               </p>
             </div>
             <div className="flex gap-3">
+              <ThemeToggle />
               <Button
                 variant="outline"
                 size="icon"

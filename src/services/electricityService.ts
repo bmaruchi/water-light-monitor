@@ -18,14 +18,30 @@ interface ElectricityReading {
 
 export const saveElectricityReading = async (reading: ElectricityReading) => {
   try {
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    
+    if (!userId) {
+      throw new Error("Usuário não autenticado");
+    }
+    
     const { data, error } = await supabase
       .from('electricity_readings')
       .insert({
-        ...reading,
-        user_id: (await supabase.auth.getUser()).data.user?.id
+        user_id: userId,
+        previous_date_reading: reading.previous_date_reading.toISOString(),
+        current_date_reading: reading.current_date_reading.toISOString(),
+        previous_reading: reading.previous_reading,
+        current_reading: reading.current_reading,
+        kwh_price: reading.kwh_price,
+        flag_type: reading.flag_type,
+        flag_value: reading.flag_value,
+        public_lighting: reading.public_lighting,
+        consumption: reading.consumption,
+        daily_consumption: reading.daily_consumption,
+        estimated_cost: reading.estimated_cost
       })
       .select();
-
+    
     if (error) throw error;
     
     toast({

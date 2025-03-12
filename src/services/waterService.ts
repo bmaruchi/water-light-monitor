@@ -14,11 +14,23 @@ interface WaterReading {
 
 export const saveWaterReading = async (reading: WaterReading) => {
   try {
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    
+    if (!userId) {
+      throw new Error("Usuário não autenticado");
+    }
+    
     const { data, error } = await supabase
       .from('water_readings')
       .insert({
-        ...reading,
-        user_id: (await supabase.auth.getUser()).data.user?.id
+        user_id: userId,
+        previous_date_reading: reading.previous_date_reading.toISOString(),
+        current_date_reading: reading.current_date_reading.toISOString(),
+        previous_reading: reading.previous_reading,
+        current_reading: reading.current_reading,
+        consumption: reading.consumption,
+        daily_consumption: reading.daily_consumption,
+        estimated_monthly_consumption: reading.estimated_monthly_consumption
       })
       .select();
     
