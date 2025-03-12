@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from '@/context/AuthContext';
 import { UserPlus, ArrowLeft } from 'lucide-react';
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -40,6 +41,9 @@ const Register = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Criar Conta</CardTitle>
@@ -103,7 +107,7 @@ const Register = () => {
           </form>
           
           <div className="mt-4 text-center text-sm">
-            <Link to="/login" className="text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center">
+            <Link to="/login" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium flex items-center justify-center">
               <ArrowLeft className="mr-1 h-4 w-4" /> Voltar para o login
             </Link>
           </div>
