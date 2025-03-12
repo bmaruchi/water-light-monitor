@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { DownloadCloud, Save } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
 
   // Calculate percentage change if previous consumption is available
   const percentageChange = previousConsumption 
@@ -63,7 +64,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) {
       toast({
         variant: "destructive",
@@ -73,6 +74,7 @@ const ReportActions: React.FC<ReportActionsProps> = ({
       return;
     }
 
+    setIsSaving(true);
     try {
       const doc = generateMonthlyReport(reportData);
       const fileName = generateReportFileName(type, month, year);
@@ -80,8 +82,8 @@ const ReportActions: React.FC<ReportActionsProps> = ({
       // Convert PDF to base64 string
       const pdfData = doc.output('datauristring').split(',')[1];
       
-      saveReport({
-        userId: user.id, // Updated from user.uid to user.id
+      const result = await saveReport({
+        userId: user.id,
         type,
         month,
         year,
@@ -92,16 +94,23 @@ const ReportActions: React.FC<ReportActionsProps> = ({
         pdfData
       });
       
-      toast({
-        title: "Relatório salvo",
-        description: "O relatório foi salvo com sucesso e pode ser acessado na página de relatórios."
-      });
+      if (result) {
+        toast({
+          title: "Relatório salvo",
+          description: "O relatório foi salvo com sucesso e pode ser acessado na página de relatórios."
+        });
+      } else {
+        throw new Error("Falha ao salvar relatório");
+      }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Erro ao salvar relatório",
         description: "Não foi possível salvar o relatório. Tente novamente."
       });
+      console.error("Erro ao salvar relatório:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -119,9 +128,10 @@ const ReportActions: React.FC<ReportActionsProps> = ({
         onClick={handleSave}
         variant="outline"
         className="flex items-center gap-2"
+        disabled={isSaving}
       >
         <Save className="h-4 w-4" />
-        Salvar no sistema
+        {isSaving ? 'Salvando...' : 'Salvar no sistema'}
       </Button>
     </div>
   );

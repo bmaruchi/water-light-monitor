@@ -13,7 +13,17 @@ import Register from "./pages/Register";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Criar QueryClient com configurações otimizadas
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutos
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

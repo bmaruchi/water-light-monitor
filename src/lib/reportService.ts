@@ -1,4 +1,5 @@
 
+import { supabase } from "@/integrations/supabase/client";
 import { generateMonthlyReport } from './pdfGenerator';
 
 interface StoredReport {
@@ -15,48 +16,88 @@ interface StoredReport {
   pdfData?: string; // Base64 encoded PDF
 }
 
-// In a real app, this would interact with a backend API
-// For now, we'll use localStorage for simplicity
-export const saveReport = (report: Omit<StoredReport, 'id' | 'createdAt'>): StoredReport => {
-  const id = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  const createdAt = new Date().toISOString();
-  
-  const newReport: StoredReport = {
-    id,
-    createdAt,
-    ...report
-  };
-  
-  // Get existing reports from localStorage
-  const storedReportsJSON = localStorage.getItem('savedReports');
-  const storedReports: StoredReport[] = storedReportsJSON ? JSON.parse(storedReportsJSON) : [];
-  
-  // Add new report
-  storedReports.push(newReport);
-  
-  // Save back to localStorage
-  localStorage.setItem('savedReports', JSON.stringify(storedReports));
-  
-  return newReport;
+export const saveReport = async (report: Omit<StoredReport, 'id' | 'createdAt'>): Promise<StoredReport | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('reports')
+      .insert({
+        user_id: report.userId,
+        type: report.type,
+        month: report.month,
+        year: report.year,
+        consumption: report.consumption,
+        daily_average: report.dailyAverage,
+        cost: report.cost,
+        file_name: report.fileName,
+        pdf_data: report.pdfData
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      userId: data.user_id,
+      type: data.type,
+      month: data.month,
+      year: data.year,
+      consumption: data.consumption,
+      dailyAverage: data.daily_average,
+      cost: data.cost,
+      fileName: data.file_name,
+      pdfData: data.pdf_data,
+      createdAt: data.created_at
+    };
+  } catch (error) {
+    console.error('Erro ao salvar relatório:', error);
+    return null;
+  }
 };
 
-export const getUserReports = (userId: string): StoredReport[] => {
-  const storedReportsJSON = localStorage.getItem('savedReports');
-  if (!storedReportsJSON) return [];
-  
-  const storedReports: StoredReport[] = JSON.parse(storedReportsJSON);
-  return storedReports.filter(report => report.userId === userId);
+export const getUserReports = async (userId: string): Promise<StoredReport[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    return data.map(report => ({
+      id: report.id,
+      userId: report.user_id,
+      type: report.type,
+      month: report.month,
+      year: report.year,
+      consumption: report.consumption,
+      dailyAverage: report.daily_average,
+      cost: report.cost,
+      fileName: report.file_name,
+      pdfData: report.pdf_data,
+      createdAt: report.created_at
+    }));
+  } catch (error) {
+    console.error('Erro ao obter relatórios:', error);
+    return [];
+  }
 };
 
-export const deleteReport = (reportId: string): boolean => {
-  const storedReportsJSON = localStorage.getItem('savedReports');
-  if (!storedReportsJSON) return false;
-  
-  const storedReports: StoredReport[] = JSON.parse(storedReportsJSON);
-  const updatedReports = storedReports.filter(report => report.id !== reportId);
-  
-  localStorage.setItem('savedReports', JSON.stringify(updatedReports));
-  return true;
+export const deleteReport = async (reportId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('reports')
+      .delete()
+      .eq('id', reportId);
+    
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao excluir relatório:', error);
+    return false;
+  }
 };
 
 export const generateReportFileName = (type: 'electricity' | 'water', month: string, year: number): string => {

@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Calculator, Zap } from "lucide-react";
+import { CalendarIcon, Calculator, Zap, Save } from "lucide-react";
 import { cn } from '@/lib/utils';
 import ConsumptionChart from './ConsumptionChart';
 import ReportActions from './ReportActions';
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from '@tanstack/react-query';
 import { 
   calculateElectricityConsumption,
   calculateDailyConsumption,
@@ -18,6 +20,7 @@ import {
   formatCurrency,
   formatNumber
 } from '@/lib/calculations';
+import { saveElectricityReading, getLastElectricityReading } from '@/services/electricityService';
 
 const flagValues = {
   green: { name: 'Verde', value: 0 },
@@ -27,6 +30,8 @@ const flagValues = {
 };
 
 const ElectricityTab: React.FC = () => {
+  const { toast } = useToast();
+  
   // State for form values
   const [previousDate, setPreviousDate] = useState<Date>(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -38,6 +43,24 @@ const ElectricityTab: React.FC = () => {
   
   // State for editing mode
   const [isEditing, setIsEditing] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // Fetch the last reading from Supabase
+  const { data: lastReading, isLoading } = useQuery({
+    queryKey: ['lastElectricityReading'],
+    queryFn: getLastElectricityReading
+  });
+
+  // Set the form values based on the last reading
+  useEffect(() => {
+    if (lastReading) {
+      setPreviousReading(lastReading.current_reading.toString());
+      setPreviousDate(new Date(lastReading.current_date_reading));
+      setKwhPrice(lastReading.kwh_price.toString());
+      setFlagType(lastReading.flag_type as keyof typeof flagValues);
+      setPublicLighting(lastReading.public_lighting.toString());
+    }
+  }, [lastReading]);
 
   // Handle form submission when values are confirmed
   const handleConfirmValues = () => {
@@ -47,6 +70,48 @@ const ElectricityTab: React.FC = () => {
   // Reset to editing mode
   const handleEditValues = () => {
     setIsEditing(true);
+  };
+
+  const handleSaveReading = async () => {
+    if (!reading || !previousReading || isNaN(parseFloat(reading)) || isNaN(parseFloat(previousReading))) {
+      toast({
+        variant: "destructive",
+        title: "Dados incompletos",
+        description: "Preencha todos os campos corretamente."
+      });
+      return;
+    }
+
+    const consumptionValue = calculateElectricityConsumption(parseFloat(reading), parseFloat(previousReading));
+    const daysSinceLastReading = Math.ceil(
+      (currentDate.getTime() - previousDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const dailyConsumptionValue = calculateDailyConsumption(consumptionValue, daysSinceLastReading);
+    const estimatedCostValue = calculateEstimatedCost(
+      dailyConsumptionValue,
+      parseFloat(kwhPrice),
+      flagValues[flagType].value,
+      parseFloat(publicLighting || '0')
+    );
+
+    setIsSaving(true);
+    try {
+      await saveElectricityReading({
+        previous_date_reading: previousDate,
+        current_date_reading: currentDate,
+        previous_reading: parseFloat(previousReading),
+        current_reading: parseFloat(reading),
+        kwh_price: parseFloat(kwhPrice),
+        flag_type: flagType,
+        flag_value: flagValues[flagType].value,
+        public_lighting: parseFloat(publicLighting || '0'),
+        consumption: consumptionValue,
+        daily_consumption: dailyConsumptionValue,
+        estimated_cost: estimatedCostValue
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const daysSinceLastReading = Math.ceil(
@@ -222,13 +287,23 @@ const ElectricityTab: React.FC = () => {
                   Confirmar Valores
                 </Button>
               ) : (
-                <Button 
-                  className="w-full" 
-                  variant="outline" 
-                  onClick={handleEditValues}
-                >
-                  Editar Valores
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    className="flex-1" 
+                    variant="outline" 
+                    onClick={handleEditValues}
+                  >
+                    Editar Valores
+                  </Button>
+                  <Button 
+                    className="flex-1 flex items-center gap-2" 
+                    onClick={handleSaveReading}
+                    disabled={isSaving}
+                  >
+                    <Save className="h-4 w-4" />
+                    {isSaving ? 'Salvando...' : 'Salvar no Supabase'}
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>

@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      electricity_readings: {
+        Row: {
+          consumption: number
+          created_at: string
+          current_date_reading: string
+          current_reading: number
+          daily_consumption: number
+          estimated_cost: number
+          flag_type: string
+          flag_value: number
+          id: string
+          kwh_price: number
+          previous_date_reading: string
+          previous_reading: number
+          public_lighting: number
+          user_id: string
+        }
+        Insert: {
+          consumption: number
+          created_at?: string
+          current_date_reading: string
+          current_reading: number
+          daily_consumption: number
+          estimated_cost: number
+          flag_type?: string
+          flag_value?: number
+          id?: string
+          kwh_price?: number
+          previous_date_reading: string
+          previous_reading: number
+          public_lighting?: number
+          user_id: string
+        }
+        Update: {
+          consumption?: number
+          created_at?: string
+          current_date_reading?: string
+          current_reading?: number
+          daily_consumption?: number
+          estimated_cost?: number
+          flag_type?: string
+          flag_value?: number
+          id?: string
+          kwh_price?: number
+          previous_date_reading?: string
+          previous_reading?: number
+          public_lighting?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -27,6 +78,87 @@ export type Database = {
           id?: string
           name?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          consumption: number
+          cost: number | null
+          created_at: string
+          daily_average: number
+          file_name: string
+          id: string
+          month: string
+          pdf_data: string | null
+          type: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          consumption: number
+          cost?: number | null
+          created_at?: string
+          daily_average: number
+          file_name: string
+          id?: string
+          month: string
+          pdf_data?: string | null
+          type: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          consumption?: number
+          cost?: number | null
+          created_at?: string
+          daily_average?: number
+          file_name?: string
+          id?: string
+          month?: string
+          pdf_data?: string | null
+          type?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      water_readings: {
+        Row: {
+          consumption: number
+          created_at: string
+          current_date_reading: string
+          current_reading: number
+          daily_consumption: number
+          estimated_monthly_consumption: number
+          id: string
+          previous_date_reading: string
+          previous_reading: number
+          user_id: string
+        }
+        Insert: {
+          consumption: number
+          created_at?: string
+          current_date_reading: string
+          current_reading: number
+          daily_consumption: number
+          estimated_monthly_consumption: number
+          id?: string
+          previous_date_reading: string
+          previous_reading: number
+          user_id: string
+        }
+        Update: {
+          consumption?: number
+          created_at?: string
+          current_date_reading?: string
+          current_reading?: number
+          daily_consumption?: number
+          estimated_monthly_consumption?: number
+          id?: string
+          previous_date_reading?: string
+          previous_reading?: number
+          user_id?: string
         }
         Relationships: []
       }

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Droplet } from "lucide-react";
+import { CalendarIcon, Droplet, Save } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from '@tanstack/react-query';
 import ConsumptionChart from './ConsumptionChart';
 import ReportActions from './ReportActions';
 import { 
@@ -16,8 +18,11 @@ import {
   calculateEstimatedWaterConsumption,
   formatNumber
 } from '@/lib/calculations';
+import { saveWaterReading, getLastWaterReading } from '@/services/waterService';
 
 const WaterTab: React.FC = () => {
+  const { toast } = useToast();
+  
   const [previousDate, setPreviousDate] = useState<Date>(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [reading, setReading] = useState<string>('');
@@ -25,6 +30,21 @@ const WaterTab: React.FC = () => {
   
   // State for editing mode
   const [isEditing, setIsEditing] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+
+  // Fetch the last reading from Supabase
+  const { data: lastReading, isLoading } = useQuery({
+    queryKey: ['lastWaterReading'],
+    queryFn: getLastWaterReading
+  });
+
+  // Set the form values based on the last reading
+  useEffect(() => {
+    if (lastReading) {
+      setPreviousReading(lastReading.current_reading.toString());
+      setPreviousDate(new Date(lastReading.current_date_reading));
+    }
+  }, [lastReading]);
 
   // Handle form submission when values are confirmed
   const handleConfirmValues = () => {
@@ -34,6 +54,39 @@ const WaterTab: React.FC = () => {
   // Reset to editing mode
   const handleEditValues = () => {
     setIsEditing(true);
+  };
+
+  const handleSaveReading = async () => {
+    if (!reading || !previousReading || isNaN(parseFloat(reading)) || isNaN(parseFloat(previousReading))) {
+      toast({
+        variant: "destructive",
+        title: "Dados incompletos",
+        description: "Preencha todos os campos corretamente."
+      });
+      return;
+    }
+
+    const consumptionValue = calculateWaterConsumption(parseFloat(reading), parseFloat(previousReading));
+    const daysSinceLastReading = Math.ceil(
+      (currentDate.getTime() - previousDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const dailyConsumptionValue = calculateDailyConsumption(consumptionValue, daysSinceLastReading);
+    const estimatedMonthlyConsumptionValue = calculateEstimatedWaterConsumption(dailyConsumptionValue);
+
+    setIsSaving(true);
+    try {
+      await saveWaterReading({
+        previous_date_reading: previousDate,
+        current_date_reading: currentDate,
+        previous_reading: parseFloat(previousReading),
+        current_reading: parseFloat(reading),
+        consumption: consumptionValue,
+        daily_consumption: dailyConsumptionValue,
+        estimated_monthly_consumption: estimatedMonthlyConsumptionValue
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const daysSinceLastReading = Math.ceil(
@@ -162,13 +215,23 @@ const WaterTab: React.FC = () => {
                   Confirmar Valores
                 </Button>
               ) : (
-                <Button 
-                  className="w-full" 
-                  variant="outline" 
-                  onClick={handleEditValues}
-                >
-                  Editar Valores
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    className="flex-1" 
+                    variant="outline" 
+                    onClick={handleEditValues}
+                  >
+                    Editar Valores
+                  </Button>
+                  <Button 
+                    className="flex-1 flex items-center gap-2" 
+                    onClick={handleSaveReading}
+                    disabled={isSaving}
+                  >
+                    <Save className="h-4 w-4" />
+                    {isSaving ? 'Salvando...' : 'Salvar no Supabase'}
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>

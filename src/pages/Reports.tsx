@@ -5,37 +5,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DownloadCloud, FileText, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { getUserReports, deleteReport } from '@/lib/reportService';
-
-interface StoredReport {
-  id: string;
-  userId: string;
-  type: 'electricity' | 'water';
-  month: string;
-  year: number;
-  createdAt: string;
-  consumption: number;
-  dailyAverage: number;
-  cost?: number;
-  fileName: string;
-  pdfData?: string;
-}
+import { getUserReports, deleteReport, StoredReport } from '@/lib/reportService';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from "@/hooks/use-toast";
 
 const Reports: React.FC = () => {
   const { user } = useAuth();
-  const [reports, setReports] = useState<StoredReport[]>([]);
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'electricity' | 'water'>('electricity');
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      const userReports = getUserReports(user.id); // Updated from user.uid to user.id
-      setReports(userReports);
-    }
-  }, [user]);
+  const { data: reports = [], refetch } = useQuery({
+    queryKey: ['reports', user?.id],
+    queryFn: () => user ? getUserReports(user.id) : Promise.resolve([]),
+    enabled: !!user
+  });
 
-  const handleDeleteReport = (reportId: string) => {
-    if (deleteReport(reportId)) {
-      setReports(prevReports => prevReports.filter(report => report.id !== reportId));
+  const handleDeleteReport = async (reportId: string) => {
+    if (!user) return;
+    
+    setIsDeleting(reportId);
+    try {
+      const success = await deleteReport(reportId);
+      if (success) {
+        refetch();
+        toast({
+          title: "Relatório excluído",
+          description: "O relatório foi excluído com sucesso."
+        });
+      } else {
+        throw new Error("Falha ao excluir relatório");
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o relatório. Tente novamente."
+      });
+      console.error("Erro ao excluir relatório:", error);
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -48,6 +57,17 @@ const Reports: React.FC = () => {
       downloadLink.href = linkSource;
       downloadLink.download = fileName;
       downloadLink.click();
+      
+      toast({
+        title: "Relatório baixado",
+        description: "O relatório foi baixado com sucesso."
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Erro ao baixar",
+        description: "Não foi possível baixar o relatório. Dados PDF ausentes."
+      });
     }
   };
 
@@ -105,6 +125,7 @@ const Reports: React.FC = () => {
                               size="icon" 
                               className="text-red-500"
                               onClick={() => handleDeleteReport(report.id)}
+                              disabled={isDeleting === report.id}
                               title="Excluir relatório"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -174,6 +195,7 @@ const Reports: React.FC = () => {
                               size="icon" 
                               className="text-red-500"
                               onClick={() => handleDeleteReport(report.id)}
+                              disabled={isDeleting === report.id}
                               title="Excluir relatório"
                             >
                               <Trash2 className="h-4 w-4" />
