@@ -44,6 +44,18 @@ export const saveElectricityReading = async (reading: ElectricityReading) => {
     
     if (error) throw error;
     
+    // Salvar os dados no localStorage para persistência
+    localStorage.setItem('electricity_reading_values', JSON.stringify({
+      previous_date_reading: reading.previous_date_reading.toISOString(),
+      current_date_reading: reading.current_date_reading.toISOString(),
+      previous_reading: reading.previous_reading,
+      current_reading: reading.current_reading,
+      kwh_price: reading.kwh_price,
+      flag_type: reading.flag_type,
+      flag_value: reading.flag_value,
+      public_lighting: reading.public_lighting
+    }));
+    
     toast({
       title: "Leitura salva",
       description: "Sua leitura de energia foi salva com sucesso!"
@@ -84,6 +96,14 @@ export const getElectricityReadings = async () => {
 
 export const getLastElectricityReading = async () => {
   try {
+    // Primeiro, verificar se temos dados no localStorage
+    const savedData = localStorage.getItem('electricity_reading_values');
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      return parsedData;
+    }
+    
+    // Se não houver dados no localStorage, buscar do banco
     const { data, error } = await supabase
       .from('electricity_readings')
       .select('*')
@@ -92,6 +112,20 @@ export const getLastElectricityReading = async () => {
       .maybeSingle();
     
     if (error) throw error;
+    
+    if (data) {
+      // Salvar no localStorage para persistência
+      localStorage.setItem('electricity_reading_values', JSON.stringify({
+        previous_date_reading: data.current_date_reading,
+        current_date_reading: new Date().toISOString(),
+        previous_reading: data.current_reading,
+        current_reading: '',
+        kwh_price: data.kwh_price,
+        flag_type: data.flag_type,
+        flag_value: data.flag_value,
+        public_lighting: data.public_lighting
+      }));
+    }
     
     return data;
   } catch (error) {

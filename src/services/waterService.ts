@@ -36,6 +36,14 @@ export const saveWaterReading = async (reading: WaterReading) => {
     
     if (error) throw error;
     
+    // Salvar os dados no localStorage para persistência
+    localStorage.setItem('water_reading_values', JSON.stringify({
+      previous_date_reading: reading.previous_date_reading.toISOString(),
+      current_date_reading: reading.current_date_reading.toISOString(),
+      previous_reading: reading.previous_reading,
+      current_reading: reading.current_reading
+    }));
+    
     toast({
       title: "Leitura salva",
       description: "Sua leitura de água foi salva com sucesso!"
@@ -76,6 +84,14 @@ export const getWaterReadings = async () => {
 
 export const getLastWaterReading = async () => {
   try {
+    // Primeiro, verificar se temos dados no localStorage
+    const savedData = localStorage.getItem('water_reading_values');
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      return parsedData;
+    }
+    
+    // Se não houver dados no localStorage, buscar do banco
     const { data, error } = await supabase
       .from('water_readings')
       .select('*')
@@ -84,6 +100,16 @@ export const getLastWaterReading = async () => {
       .maybeSingle();
     
     if (error) throw error;
+    
+    if (data) {
+      // Salvar no localStorage para persistência
+      localStorage.setItem('water_reading_values', JSON.stringify({
+        previous_date_reading: data.current_date_reading,
+        current_date_reading: new Date().toISOString(),
+        previous_reading: data.current_reading,
+        current_reading: '',
+      }));
+    }
     
     return data;
   } catch (error) {

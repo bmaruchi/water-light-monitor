@@ -45,6 +45,39 @@ const ElectricityTab: React.FC = () => {
   const [isEditing, setIsEditing] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
+  // Carregar valores do localStorage ao inicializar o componente
+  useEffect(() => {
+    const savedValuesStr = localStorage.getItem('electricity_reading_values');
+    if (savedValuesStr) {
+      try {
+        const savedValues = JSON.parse(savedValuesStr);
+        if (savedValues.previous_date_reading) {
+          setPreviousDate(new Date(savedValues.previous_date_reading));
+        }
+        if (savedValues.current_date_reading) {
+          setCurrentDate(new Date(savedValues.current_date_reading));
+        }
+        if (savedValues.previous_reading !== undefined) {
+          setPreviousReading(savedValues.previous_reading.toString());
+        }
+        if (savedValues.current_reading !== undefined && savedValues.current_reading !== '') {
+          setReading(savedValues.current_reading.toString());
+        }
+        if (savedValues.kwh_price !== undefined) {
+          setKwhPrice(savedValues.kwh_price.toString());
+        }
+        if (savedValues.flag_type) {
+          setFlagType(savedValues.flag_type as keyof typeof flagValues);
+        }
+        if (savedValues.public_lighting !== undefined) {
+          setPublicLighting(savedValues.public_lighting.toString());
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados salvos:", error);
+      }
+    }
+  }, []);
+
   // Fetch the last reading from Supabase
   const { data: lastReading, isLoading } = useQuery({
     queryKey: ['lastElectricityReading'],
@@ -53,14 +86,44 @@ const ElectricityTab: React.FC = () => {
 
   // Set the form values based on the last reading
   useEffect(() => {
-    if (lastReading) {
-      setPreviousReading(lastReading.current_reading.toString());
-      setPreviousDate(new Date(lastReading.current_date_reading));
-      setKwhPrice(lastReading.kwh_price.toString());
-      setFlagType(lastReading.flag_type as keyof typeof flagValues);
-      setPublicLighting(lastReading.public_lighting.toString());
+    if (lastReading && !localStorage.getItem('electricity_reading_values')) {
+      if (lastReading.previous_date_reading) {
+        setPreviousDate(new Date(lastReading.previous_date_reading));
+      }
+      if (lastReading.current_date_reading) {
+        setCurrentDate(new Date(lastReading.current_date_reading));
+      }
+      if (lastReading.previous_reading !== undefined) {
+        setPreviousReading(lastReading.previous_reading.toString());
+      }
+      if (lastReading.current_reading !== undefined) {
+        setPreviousReading(lastReading.current_reading.toString());
+      }
+      if (lastReading.kwh_price !== undefined) {
+        setKwhPrice(lastReading.kwh_price.toString());
+      }
+      if (lastReading.flag_type) {
+        setFlagType(lastReading.flag_type as keyof typeof flagValues);
+      }
+      if (lastReading.public_lighting !== undefined) {
+        setPublicLighting(lastReading.public_lighting.toString());
+      }
     }
   }, [lastReading]);
+
+  // Função para salvar os valores no localStorage sempre que forem alterados
+  useEffect(() => {
+    localStorage.setItem('electricity_reading_values', JSON.stringify({
+      previous_date_reading: previousDate.toISOString(),
+      current_date_reading: currentDate.toISOString(),
+      previous_reading: previousReading,
+      current_reading: reading,
+      kwh_price: kwhPrice,
+      flag_type: flagType,
+      flag_value: flagValues[flagType].value,
+      public_lighting: publicLighting
+    }));
+  }, [previousDate, currentDate, previousReading, reading, kwhPrice, flagType, publicLighting]);
 
   // Handle form submission when values are confirmed
   const handleConfirmValues = () => {

@@ -1,244 +1,155 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DownloadCloud, FileText, Trash2 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { getUserReports, deleteReport, StoredReport } from '@/lib/reportService';
 import { useQuery } from '@tanstack/react-query';
-import { useToast } from "@/hooks/use-toast";
+import { Button } from '@/components/ui/button';
+import { Download, Droplet, Zap } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { getReports } from '@/lib/reportService';
+import { formatNumber, formatCurrency } from '@/lib/calculations';
 
-const Reports: React.FC = () => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'electricity' | 'water'>('electricity');
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
-
-  const { data: reports = [], refetch } = useQuery({
-    queryKey: ['reports', user?.id],
-    queryFn: () => user ? getUserReports(user.id) : Promise.resolve([]),
-    enabled: !!user
+const Reports = () => {
+  const { data: reports = [], isLoading, error } = useQuery({
+    queryKey: ['reports'],
+    queryFn: getReports
   });
 
-  const handleDeleteReport = async (reportId: string) => {
-    if (!user) return;
-    
-    setIsDeleting(reportId);
-    try {
-      const success = await deleteReport(reportId);
-      if (success) {
-        refetch();
-        toast({
-          title: "Relatório excluído",
-          description: "O relatório foi excluído com sucesso."
-        });
-      } else {
-        throw new Error("Falha ao excluir relatório");
-      }
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir o relatório. Tente novamente."
-      });
-      console.error("Erro ao excluir relatório:", error);
-    } finally {
-      setIsDeleting(null);
-    }
-  };
+  const waterReports = reports.filter(report => report.type === 'water');
+  const electricityReports = reports.filter(report => report.type === 'electricity');
 
-  const handleDownloadReport = (report: StoredReport) => {
-    if (report.pdfData) {
-      const linkSource = `data:application/pdf;base64,${report.pdfData}`;
-      const downloadLink = document.createElement("a");
-      const fileName = report.fileName;
-      
-      downloadLink.href = linkSource;
-      downloadLink.download = fileName;
-      downloadLink.click();
-      
-      toast({
-        title: "Relatório baixado",
-        description: "O relatório foi baixado com sucesso."
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Erro ao baixar",
-        description: "Não foi possível baixar o relatório. Dados PDF ausentes."
-      });
-    }
+  const handleDownload = (pdfData: string, fileName: string) => {
+    const link = document.createElement('a');
+    link.href = pdfData;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
-
-  const filteredReports = reports.filter(report => report.type === activeTab);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
-      <div className="container py-8 px-4 md:px-6 lg:px-8">
-        {/* Header */}
-        <header className="mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold">
-                Relatórios
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Gerencie e visualize seus relatórios de consumo salvos
-              </p>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main>
-          <Card className="p-6">
-            <Tabs defaultValue="electricity" onValueChange={(value) => setActiveTab(value as 'electricity' | 'water')}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="electricity" className="text-lg">Energia</TabsTrigger>
-                <TabsTrigger value="water" className="text-lg">Água</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="electricity" className="space-y-4">
-                {filteredReports.length > 0 ? (
-                  filteredReports.map(report => (
-                    <Card key={report.id} className="overflow-hidden">
-                      <CardHeader className="bg-amber-50 dark:bg-amber-950/20 py-4">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                            <CardTitle>
-                              Relatório de Energia - {report.month}/{report.year}
-                            </CardTitle>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => handleDownloadReport(report)}
-                              title="Baixar relatório"
-                            >
-                              <DownloadCloud className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="text-red-500"
-                              onClick={() => handleDeleteReport(report.id)}
-                              disabled={isDeleting === report.id}
-                              title="Excluir relatório"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <CardDescription>
-                          Criado em {new Date(report.createdAt).toLocaleDateString('pt-BR')}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="py-4">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Consumo</p>
-                            <p className="font-medium">{report.consumption} kWh</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Média Diária</p>
-                            <p className="font-medium">{report.dailyAverage.toFixed(3)} kWh</p>
-                          </div>
-                          {report.cost !== undefined && (
-                            <div>
-                              <p className="text-sm text-muted-foreground">Custo Estimado</p>
-                              <p className="font-medium">
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(report.cost)}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="text-center py-12">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground opacity-30 mb-4" />
-                    <h3 className="text-lg font-medium">Nenhum relatório encontrado</h3>
-                    <p className="text-muted-foreground mt-1">
-                      Registre leituras de energia e gere relatórios para visualizá-los aqui
-                    </p>
+    <div className="container py-6">
+      <h1 className="text-2xl font-bold mb-6">Seus Relatórios</h1>
+      
+      <Tabs defaultValue="water" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="water" className="flex items-center gap-2">
+            <Droplet className="h-4 w-4" />
+            Água
+          </TabsTrigger>
+          <TabsTrigger value="electricity" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Energia
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="water" className="space-y-4">
+          {isLoading ? (
+            <p>Carregando relatórios...</p>
+          ) : error ? (
+            <p className="text-red-500">Erro ao carregar relatórios de água</p>
+          ) : waterReports.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  Você ainda não tem relatórios de água.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            waterReports.map(report => (
+              <Card key={report.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl flex items-center justify-between">
+                    <span>{report.month} de {report.year}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => handleDownload(report.pdf_data, report.file_name)}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Baixar</span>
+                    </Button>
+                  </CardTitle>
+                  <CardDescription>
+                    Relatório gerado em {format(parseISO(report.created_at), 'dd/MM/yyyy')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Consumo Total</p>
+                      <p className="text-lg font-semibold">{formatNumber(report.consumption)} m³</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Consumo Diário</p>
+                      <p className="text-lg font-semibold">{formatNumber(report.daily_average)} m³/dia</p>
+                    </div>
                   </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="water" className="space-y-4">
-                {filteredReports.filter(report => report.type === 'water').length > 0 ? (
-                  filteredReports.map(report => (
-                    <Card key={report.id} className="overflow-hidden">
-                      <CardHeader className="bg-blue-50 dark:bg-blue-950/20 py-4">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            <CardTitle>
-                              Relatório de Água - {report.month}/{report.year}
-                            </CardTitle>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => handleDownloadReport(report)}
-                              title="Baixar relatório"
-                            >
-                              <DownloadCloud className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="text-red-500"
-                              onClick={() => handleDeleteReport(report.id)}
-                              disabled={isDeleting === report.id}
-                              title="Excluir relatório"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <CardDescription>
-                          Criado em {new Date(report.createdAt).toLocaleDateString('pt-BR')}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Consumo</p>
-                            <p className="font-medium">{report.consumption} m³</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Média Diária</p>
-                            <p className="font-medium">{report.dailyAverage.toFixed(3)} m³</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="text-center py-12">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground opacity-30 mb-4" />
-                    <h3 className="text-lg font-medium">Nenhum relatório encontrado</h3>
-                    <p className="text-muted-foreground mt-1">
-                      Registre leituras de água e gere relatórios para visualizá-los aqui
-                    </p>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+        
+        <TabsContent value="electricity" className="space-y-4">
+          {isLoading ? (
+            <p>Carregando relatórios...</p>
+          ) : error ? (
+            <p className="text-red-500">Erro ao carregar relatórios de energia</p>
+          ) : electricityReports.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  Você ainda não tem relatórios de energia.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            electricityReports.map(report => (
+              <Card key={report.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl flex items-center justify-between">
+                    <span>{report.month} de {report.year}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="flex items-center gap-1"
+                      onClick={() => handleDownload(report.pdf_data, report.file_name)}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Baixar</span>
+                    </Button>
+                  </CardTitle>
+                  <CardDescription>
+                    Relatório gerado em {format(parseISO(report.created_at), 'dd/MM/yyyy')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4 mb-2">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Consumo Total</p>
+                      <p className="text-lg font-semibold">{formatNumber(report.consumption)} kWh</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Consumo Diário</p>
+                      <p className="text-lg font-semibold">{formatNumber(report.daily_average)} kWh/dia</p>
+                    </div>
                   </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </Card>
-        </main>
-
-        {/* Footer */}
-        <footer className="mt-12 text-center text-sm text-muted-foreground">
-          <p>© 2023 Monitor de Consumo - Economize recursos e ajude o planeta</p>
-        </footer>
-      </div>
+                  
+                  {report.cost && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Custo Estimado</p>
+                      <p className="text-lg font-semibold text-amber-600">{formatCurrency(report.cost)}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

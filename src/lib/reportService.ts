@@ -1,148 +1,149 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { generatePdf } from "@/lib/pdfGenerator";
-import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { jsPDF } from "jspdf";
+import { format } from "date-fns";
+import { formatCurrency, formatNumber } from "./calculations";
 
-export type ReportType = "electricity" | "water";
+export type ReportType = 'electricity' | 'water';
 
-export interface ReportData {
+interface ReportData {
   type: ReportType;
   month: string;
   year: number;
   consumption: number;
   dailyAverage: number;
   cost?: number;
-  readings: any[];
+  previousConsumption?: number;
 }
 
-export interface StoredReport {
-  id: string;
-  userId: string;
-  type: ReportType;
-  month: string;
-  year: number;
-  consumption: number;
-  dailyAverage: number;
-  cost: number;
-  fileName: string;
-  pdfData: string;
-  createdAt: string;
-}
-
-export const generateReport = async (data: ReportData): Promise<StoredReport | null> => {
-  try {
-    const fileName = `relatorio_${data.type === 'electricity' ? 'energia' : 'agua'}_${data.month.toLowerCase()}_${data.year}.pdf`;
-    const { pdfBase64 } = await generatePdf(data);
+export const generatePdf = (reportData: ReportData): string => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const title = `Relatório de ${reportData.type === 'electricity' ? 'Energia' : 'Água'}`;
+  const subtitle = `${reportData.month} de ${reportData.year}`;
+  
+  // Title
+  doc.setFontSize(20);
+  doc.setTextColor(0, 0, 0);
+  doc.text(title, pageWidth / 2, 20, { align: 'center' });
+  
+  // Subtitle
+  doc.setFontSize(16);
+  doc.text(subtitle, pageWidth / 2, 30, { align: 'center' });
+  
+  // Content
+  doc.setFontSize(12);
+  let yPosition = 50;
+  const lineHeight = 8;
+  
+  doc.text(`Consumo total: ${formatNumber(reportData.consumption)} ${reportData.type === 'electricity' ? 'kWh' : 'm³'}`, 20, yPosition);
+  yPosition += lineHeight;
+  
+  doc.text(`Consumo diário médio: ${formatNumber(reportData.dailyAverage)} ${reportData.type === 'electricity' ? 'kWh/dia' : 'm³/dia'}`, 20, yPosition);
+  yPosition += lineHeight;
+  
+  if (reportData.cost !== undefined && reportData.type === 'electricity') {
+    doc.text(`Custo estimado: ${formatCurrency(reportData.cost)}`, 20, yPosition);
+    yPosition += lineHeight;
+  }
+  
+  if (reportData.previousConsumption !== undefined) {
+    const diff = reportData.consumption - reportData.previousConsumption;
+    const percentChange = (diff / reportData.previousConsumption) * 100;
+    const changeText = percentChange >= 0 
+      ? `Aumento de ${formatNumber(percentChange)}% em relação à leitura anterior` 
+      : `Redução de ${formatNumber(Math.abs(percentChange))}% em relação à leitura anterior`;
     
+    doc.text(changeText, 20, yPosition);
+    yPosition += lineHeight;
+  }
+  
+  // Footer
+  doc.setFontSize(10);
+  doc.text(`Relatório gerado em ${format(new Date(), 'dd/MM/yyyy')}`, 20, doc.internal.pageSize.getHeight() - 10);
+  
+  return doc.output('datauristring');
+};
+
+export const generateReportFileName = (type: ReportType, month: string, year: number): string => {
+  const typeLabel = type === 'electricity' ? 'energia' : 'agua';
+  return `relatorio_${typeLabel}_${month.toLowerCase()}_${year}.pdf`;
+};
+
+export const saveReport = async (reportData: ReportData): Promise<boolean> => {
+  try {
     const userId = (await supabase.auth.getUser()).data.user?.id;
     
     if (!userId) {
-      throw new Error("Usuário não autenticado");
+      toast({
+        variant: "destructive",
+        title: "Erro ao gerar relatório",
+        description: "Usuário não autenticado."
+      });
+      return false;
     }
     
-    const { data: reportData, error } = await supabase
+    const pdfData = generatePdf(reportData);
+    const fileName = generateReportFileName(reportData.type, reportData.month, reportData.year);
+    
+    const { error } = await supabase
       .from('reports')
       .insert({
         user_id: userId,
-        type: data.type,
-        month: data.month,
-        year: data.year,
-        consumption: data.consumption,
-        daily_average: data.dailyAverage,
-        cost: data.cost || 0,
+        type: reportData.type,
+        month: reportData.month,
+        year: reportData.year,
+        consumption: reportData.consumption,
+        daily_average: reportData.dailyAverage,
+        cost: reportData.cost,
         file_name: fileName,
-        pdf_data: pdfBase64
-      })
-      .select()
-      .single();
+        pdf_data: pdfData
+      });
     
     if (error) throw error;
     
     toast({
-      title: "Relatório gerado",
-      description: `Relatório de ${data.type === 'electricity' ? 'energia' : 'água'} para ${data.month}/${data.year} gerado com sucesso.`
+      title: "Relatório salvo",
+      description: "Seu relatório foi salvo com sucesso!"
     });
     
-    return {
-      id: reportData.id,
-      userId: reportData.user_id,
-      type: reportData.type as ReportType,
-      month: reportData.month,
-      year: reportData.year,
-      consumption: reportData.consumption,
-      dailyAverage: reportData.daily_average,
-      cost: reportData.cost,
-      fileName: reportData.file_name,
-      pdfData: reportData.pdf_data,
-      createdAt: reportData.created_at
-    };
+    return true;
   } catch (error) {
-    console.error("Erro ao gerar relatório:", error);
+    console.error("Erro ao salvar relatório:", error);
     toast({
       variant: "destructive",
-      title: "Erro ao gerar relatório",
-      description: "Não foi possível gerar o relatório. Tente novamente mais tarde."
+      title: "Erro ao salvar relatório",
+      description: "Não foi possível salvar o relatório."
     });
-    return null;
+    return false;
   }
 };
 
-export const getReports = async (): Promise<StoredReport[]> => {
+export const getReports = async () => {
   try {
+    const userId = (await supabase.auth.getUser()).data.user?.id;
+    
+    if (!userId) {
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('reports')
       .select('*')
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
     
-    return data.map(report => ({
-      id: report.id,
-      userId: report.user_id,
-      type: report.type as ReportType,
-      month: report.month,
-      year: report.year,
-      consumption: report.consumption,
-      dailyAverage: report.daily_average,
-      cost: report.cost,
-      fileName: report.file_name,
-      pdfData: report.pdf_data,
-      createdAt: report.created_at
-    }));
+    return data;
   } catch (error) {
     console.error("Erro ao buscar relatórios:", error);
     toast({
       variant: "destructive",
       title: "Erro ao carregar relatórios",
-      description: "Não foi possível carregar os relatórios. Tente novamente mais tarde."
+      description: "Não foi possível carregar seus relatórios."
     });
     return [];
-  }
-};
-
-export const deleteReport = async (id: string): Promise<boolean> => {
-  try {
-    const { error } = await supabase
-      .from('reports')
-      .delete()
-      .eq('id', id);
-    
-    if (error) throw error;
-    
-    toast({
-      title: "Relatório excluído",
-      description: "O relatório foi excluído com sucesso."
-    });
-    
-    return true;
-  } catch (error) {
-    console.error("Erro ao excluir relatório:", error);
-    toast({
-      variant: "destructive",
-      title: "Erro ao excluir relatório",
-      description: "Não foi possível excluir o relatório. Tente novamente mais tarde."
-    });
-    return false;
   }
 };
