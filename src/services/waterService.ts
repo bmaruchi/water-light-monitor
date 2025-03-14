@@ -41,7 +41,8 @@ export const saveWaterReading = async (reading: WaterReading) => {
       previous_date_reading: reading.previous_date_reading.toISOString(),
       current_date_reading: reading.current_date_reading.toISOString(),
       previous_reading: reading.previous_reading,
-      current_reading: reading.current_reading
+      current_reading: reading.current_reading,
+      daily_consumption: reading.daily_consumption
     }));
     
     toast({
@@ -108,6 +109,7 @@ export const getLastWaterReading = async () => {
         current_date_reading: new Date().toISOString(),
         previous_reading: data.current_reading,
         current_reading: '',
+        daily_consumption: data.daily_consumption
       }));
     }
     

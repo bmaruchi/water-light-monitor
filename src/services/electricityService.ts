@@ -53,7 +53,8 @@ export const saveElectricityReading = async (reading: ElectricityReading) => {
       kwh_price: reading.kwh_price,
       flag_type: reading.flag_type,
       flag_value: reading.flag_value,
-      public_lighting: reading.public_lighting
+      public_lighting: reading.public_lighting,
+      daily_consumption: reading.daily_consumption
     }));
     
     toast({
@@ -123,7 +124,8 @@ export const getLastElectricityReading = async () => {
         kwh_price: data.kwh_price,
         flag_type: data.flag_type,
         flag_value: data.flag_value,
-        public_lighting: data.public_lighting
+        public_lighting: data.public_lighting,
+        daily_consumption: data.daily_consumption
       }));
     }
     
