@@ -1,24 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Droplet, Save } from "lucide-react";
+import { Droplet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from '@tanstack/react-query';
-import ConsumptionChart from './ConsumptionChart';
-import ReportActions from './ReportActions';
 import { 
   calculateWaterConsumption,
   calculateDailyConsumption,
-  calculateEstimatedWaterConsumption,
-  formatNumber
+  calculateEstimatedWaterConsumption
 } from '@/lib/calculations';
 import { saveWaterReading, getLastWaterReading } from '@/services/waterService';
+import WaterInputForm from './water/WaterInputForm';
+import WaterResults from './water/WaterResults';
+import ConsumptionChart from './ConsumptionChart';
 
 const WaterTab: React.FC = () => {
   const { toast } = useToast();
@@ -57,7 +52,7 @@ const WaterTab: React.FC = () => {
   }, []);
 
   // Fetch the last reading from Supabase
-  const { data: lastReading, isLoading } = useQuery({
+  const { data: lastReading } = useQuery({
     queryKey: ['lastWaterReading'],
     queryFn: getLastWaterReading
   });
@@ -167,117 +162,23 @@ const WaterTab: React.FC = () => {
               Insira os dados da sua fatura de água para acompanhar o consumo
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Previous Reading Date and Value */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="previous-date">Data da Leitura Anterior</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal input-water"
-                      disabled={!isEditing}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {previousDate ? format(previousDate, "dd/MM/yyyy") : "Selecione uma data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={previousDate}
-                      onSelect={(date) => date && setPreviousDate(date)}
-                      className="rounded-md border"
-                      disabled={!isEditing}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="previous-reading">Leitura Anterior (m³)</Label>
-                <Input
-                  id="previous-reading"
-                  type="number"
-                  placeholder="120"
-                  value={previousReading}
-                  onChange={(e) => setPreviousReading(e.target.value)}
-                  className="input-water"
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            {/* Current Reading Date and Value */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-date">Data da Leitura Atual</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal input-water"
-                      disabled={!isEditing}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {currentDate ? format(currentDate, "dd/MM/yyyy") : "Selecione uma data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={currentDate}
-                      onSelect={(date) => date && setCurrentDate(date)}
-                      className="rounded-md border"
-                      disabled={!isEditing}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="current-reading">Leitura Atual (m³)</Label>
-                <Input
-                  id="current-reading"
-                  type="number"
-                  placeholder="130"
-                  value={reading}
-                  onChange={(e) => setReading(e.target.value)}
-                  className="input-water"
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-            
-            {/* Confirm/Edit Button */}
-            <div className="pt-4">
-              {isEditing ? (
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700" 
-                  onClick={handleConfirmValues}
-                  disabled={!reading || !previousReading}
-                >
-                  Confirmar Valores
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button 
-                    className="flex-1" 
-                    variant="outline" 
-                    onClick={handleEditValues}
-                  >
-                    Editar Valores
-                  </Button>
-                  <Button 
-                    className="flex-1 flex items-center gap-2" 
-                    onClick={handleSaveReading}
-                    disabled={isSaving}
-                  >
-                    <Save className="h-4 w-4" />
-                    {isSaving ? 'Salvando...' : 'Salvar no Supabase'}
-                  </Button>
-                </div>
-              )}
-            </div>
+          <CardContent>
+            <WaterInputForm 
+              previousDate={previousDate}
+              setPreviousDate={setPreviousDate}
+              currentDate={currentDate}
+              setCurrentDate={setCurrentDate}
+              previousReading={previousReading}
+              setPreviousReading={setPreviousReading}
+              reading={reading}
+              setReading={setReading}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+              isSaving={isSaving}
+              handleConfirmValues={handleConfirmValues}
+              handleEditValues={handleEditValues}
+              handleSaveReading={handleSaveReading}
+            />
           </CardContent>
         </Card>
 
@@ -291,62 +192,17 @@ const WaterTab: React.FC = () => {
               Informações e cálculos baseados nos dados inseridos
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Consumo Atual</p>
-                <p className="text-2xl font-bold">
-                  {consumption ? `${formatNumber(consumption)} m³` : "falta dados"}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Dias desde última leitura</p>
-                <p className="text-2xl font-bold">{daysSinceLastReading}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Consumo Diário</p>
-                <p className="text-2xl font-bold">
-                  {dailyConsumption ? `${formatNumber(dailyConsumption, 3)} m³` : "falta dados"}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <p className="text-sm text-muted-foreground mb-1">Previsão para 30 dias</p>
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {estimatedMonthlyConsumption 
-                  ? `${formatNumber(estimatedMonthlyConsumption)} m³` 
-                  : "falta dados"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Baseado no consumo diário atual
-              </p>
-            </div>
-
-            <div className="pt-6 pb-2">
-              <p className="text-sm font-medium">Dicas de Economia:</p>
-              <ul className="text-sm text-muted-foreground list-disc pl-5 pt-2 space-y-1">
-                <li>Tome banhos de até 5 minutos</li>
-                <li>Conserte vazamentos imediatamente</li>
-                <li>Use a máquina de lavar com carga completa</li>
-                <li>Feche a torneira ao escovar os dentes</li>
-              </ul>
-            </div>
-
-            {/* Report Actions */}
-            {consumption && dailyConsumption && !isEditing && (
-              <ReportActions
-                type="water"
-                month={currentMonthName}
-                year={currentYear}
-                consumption={consumption}
-                dailyAverage={dailyConsumption}
-                previousConsumption={previousReading ? parseFloat(previousReading) : undefined}
-              />
-            )}
+          <CardContent>
+            <WaterResults 
+              consumption={consumption}
+              daysSinceLastReading={daysSinceLastReading}
+              dailyConsumption={dailyConsumption}
+              estimatedMonthlyConsumption={estimatedMonthlyConsumption}
+              isEditing={isEditing}
+              currentMonthName={currentMonthName}
+              currentYear={currentYear}
+              previousReading={previousReading}
+            />
           </CardContent>
         </Card>
       </div>

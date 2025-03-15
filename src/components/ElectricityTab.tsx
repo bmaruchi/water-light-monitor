@@ -1,26 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Calculator, Zap, Save } from "lucide-react";
-import { cn } from '@/lib/utils';
-import ConsumptionChart from './ConsumptionChart';
-import ReportActions from './ReportActions';
+import { Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from '@tanstack/react-query';
 import { 
   calculateElectricityConsumption,
   calculateDailyConsumption,
-  calculateEstimatedCost,
-  formatCurrency,
-  formatNumber
+  calculateEstimatedCost
 } from '@/lib/calculations';
 import { saveElectricityReading, getLastElectricityReading } from '@/services/electricityService';
+import ElectricityInputForm from './electricity/ElectricityInputForm';
+import ElectricityResults from './electricity/ElectricityResults';
+import ConsumptionChart from './ConsumptionChart';
 
 const flagValues = {
   green: { name: 'Verde', value: 0 },
@@ -79,7 +72,7 @@ const ElectricityTab: React.FC = () => {
   }, []);
 
   // Fetch the last reading from Supabase
-  const { data: lastReading, isLoading } = useQuery({
+  const { data: lastReading } = useQuery({
     queryKey: ['lastElectricityReading'],
     queryFn: getLastElectricityReading
   });
@@ -216,159 +209,30 @@ const ElectricityTab: React.FC = () => {
               Insira os dados da sua fatura de energia para acompanhar o consumo
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Previous Reading Date and Value */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="previous-date">Data da Leitura Anterior</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                      disabled={!isEditing}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {previousDate ? format(previousDate, "dd/MM/yyyy") : "Selecione uma data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={previousDate}
-                      onSelect={(date) => date && setPreviousDate(date)}
-                      className="rounded-md border"
-                      disabled={!isEditing}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="previous-reading">Leitura Anterior (kWh)</Label>
-                <Input
-                  id="previous-reading"
-                  type="number"
-                  placeholder="1250"
-                  value={previousReading}
-                  onChange={(e) => setPreviousReading(e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            {/* Current Reading Date and Value */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-date">Data da Leitura Atual</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                      disabled={!isEditing}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {currentDate ? format(currentDate, "dd/MM/yyyy") : "Selecione uma data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={currentDate}
-                      onSelect={(date) => date && setCurrentDate(date)}
-                      className="rounded-md border"
-                      disabled={!isEditing}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="current-reading">Leitura Atual (kWh)</Label>
-                <Input
-                  id="current-reading"
-                  type="number"
-                  placeholder="1350"
-                  value={reading}
-                  onChange={(e) => setReading(e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            {/* Price and Public Lighting */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="kwh-price">Valor do kWh (R$)</Label>
-                <Input
-                  id="kwh-price"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.70"
-                  value={kwhPrice}
-                  onChange={(e) => setKwhPrice(e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="public-lighting">Iluminação Pública (R$)</Label>
-                <Input
-                  id="public-lighting"
-                  type="number"
-                  step="0.01"
-                  placeholder="35.80"
-                  value={publicLighting}
-                  onChange={(e) => setPublicLighting(e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            {/* Flag Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="flag-type">Bandeira Tarifária</Label>
-              <select 
-                id="flag-type"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={flagType}
-                onChange={(e) => setFlagType(e.target.value as keyof typeof flagValues)}
-                disabled={!isEditing}
-              >
-                {Object.entries(flagValues).map(([key, { name }]) => (
-                  <option key={key} value={key}>{name}</option>
-                ))}
-              </select>
-            </div>
-            
-            {/* Confirm/Edit Button */}
-            <div className="pt-4">
-              {isEditing ? (
-                <Button 
-                  className="w-full bg-amber-600 hover:bg-amber-700" 
-                  onClick={handleConfirmValues}
-                  disabled={!reading || !previousReading}
-                >
-                  Confirmar Valores
-                </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button 
-                    className="flex-1" 
-                    variant="outline" 
-                    onClick={handleEditValues}
-                  >
-                    Editar Valores
-                  </Button>
-                  <Button 
-                    className="flex-1 flex items-center gap-2" 
-                    onClick={handleSaveReading}
-                    disabled={isSaving}
-                  >
-                    <Save className="h-4 w-4" />
-                    {isSaving ? 'Salvando...' : 'Salvar no Supabase'}
-                  </Button>
-                </div>
-              )}
-            </div>
+          <CardContent>
+            <ElectricityInputForm 
+              previousDate={previousDate}
+              setPreviousDate={setPreviousDate}
+              currentDate={currentDate}
+              setCurrentDate={setCurrentDate}
+              previousReading={previousReading}
+              setPreviousReading={setPreviousReading}
+              reading={reading}
+              setReading={setReading}
+              kwhPrice={kwhPrice}
+              setKwhPrice={setKwhPrice}
+              flagType={flagType}
+              setFlagType={setFlagType}
+              publicLighting={publicLighting}
+              setPublicLighting={setPublicLighting}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
+              isSaving={isSaving}
+              handleConfirmValues={handleConfirmValues}
+              handleEditValues={handleEditValues}
+              handleSaveReading={handleSaveReading}
+              flagValues={flagValues}
+            />
           </CardContent>
         </Card>
 
@@ -382,66 +246,19 @@ const ElectricityTab: React.FC = () => {
               Informações e cálculos baseados nos dados inseridos
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Consumo Atual</p>
-                <p className="text-2xl font-bold">
-                  {consumption ? `${formatNumber(consumption)} kWh` : "falta dados"}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Dias desde última leitura</p>
-                <p className="text-2xl font-bold">{daysSinceLastReading}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Consumo Diário</p>
-                <p className="text-2xl font-bold">
-                  {dailyConsumption ? `${formatNumber(dailyConsumption)} kWh` : "falta dados"}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Valor da Bandeira</p>
-                <p className="text-2xl font-bold">
-                  {`R$ ${flagValues[flagType].value.toFixed(5)}/kWh`}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Previsão para 30 dias</p>
-              <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
-                {estimatedCost ? formatCurrency(estimatedCost) : "falta dados"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Baseado no consumo diário atual
-              </p>
-            </div>
-
-            <div className="pt-4">
-              <p className="text-sm font-medium">Dicas de Economia:</p>
-              <ul className="text-sm text-muted-foreground list-disc pl-5 pt-2 space-y-1">
-                <li>Substitua lâmpadas por modelos LED</li>
-                <li>Desligue aparelhos em modo standby</li>
-                <li>Utilize ar-condicionado em temperatura moderada</li>
-              </ul>
-            </div>
-
-            {/* Report Actions */}
-            {consumption && dailyConsumption && !isEditing && (
-              <ReportActions
-                type="electricity"
-                month={currentMonthName}
-                year={currentYear}
-                consumption={consumption}
-                dailyAverage={dailyConsumption}
-                cost={estimatedCost || undefined}
-                previousConsumption={previousReading ? parseFloat(previousReading) : undefined}
-              />
-            )}
+          <CardContent>
+            <ElectricityResults 
+              consumption={consumption}
+              daysSinceLastReading={daysSinceLastReading}
+              dailyConsumption={dailyConsumption}
+              estimatedCost={estimatedCost}
+              flagType={flagType}
+              flagValues={flagValues}
+              isEditing={isEditing}
+              currentMonthName={currentMonthName}
+              currentYear={currentYear}
+              previousReading={previousReading}
+            />
           </CardContent>
         </Card>
       </div>
