@@ -1,9 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Droplet, Zap } from 'lucide-react';
 import ElectricityTab from './ElectricityTab';
 import WaterTab from './WaterTab';
+
+// Memo para evitar re-renderizações desnecessárias
+const MemoizedElectricityTab = memo(ElectricityTab);
+const MemoizedWaterTab = memo(WaterTab);
 
 const TabsContainer: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("electricity");
@@ -25,14 +29,14 @@ const TabsContainer: React.FC = () => {
         value="electricity" 
         className="animate-fade-in electricity-tab p-6 rounded-lg"
       >
-        <ElectricityTab />
+        <MemoizedElectricityTab />
       </TabsContent>
       
       <TabsContent 
         value="water" 
         className="animate-fade-in water-tab p-6 rounded-lg"
       >
-        <WaterTab />
+        <MemoizedWaterTab />
       </TabsContent>
     </Tabs>
   );

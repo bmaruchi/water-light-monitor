@@ -1,4 +1,7 @@
 
+import { ptBR } from 'date-fns/locale';
+import { format } from 'date-fns';
+
 export interface ElectricityReading {
   date: Date;
   reading: number;
@@ -69,11 +72,28 @@ export const formatNumber = (value: number, decimals: number = 2): string => {
   return value.toFixed(decimals);
 };
 
+// Cache para os dados aleatórios, evitando gerar novos valores a cada renderização
+const randomDataCache = new Map<string, number[]>();
+
 export const getRandomData = (length: number, min: number, max: number): number[] => {
-  return Array.from({ length }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+  const cacheKey = `${length}_${min}_${max}`;
+  
+  if (!randomDataCache.has(cacheKey)) {
+    const data = Array.from({ length }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+    randomDataCache.set(cacheKey, data);
+  }
+  
+  return randomDataCache.get(cacheKey) || [];
 };
 
+// Cache para os meses
+const monthsCache = new Map<number, string[]>();
+
 export const getLastMonths = (count: number): string[] => {
+  if (monthsCache.has(count)) {
+    return monthsCache.get(count) || [];
+  }
+  
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const date = new Date();
   const currentMonth = date.getMonth();
@@ -84,5 +104,11 @@ export const getLastMonths = (count: number): string[] => {
     result.push(months[monthIndex]);
   }
   
+  monthsCache.set(count, result);
   return result;
+};
+
+// Função para formatar meses em português brasileiro
+export const formatMonth = (date: Date): string => {
+  return format(date, 'MMMM', { locale: ptBR });
 };
