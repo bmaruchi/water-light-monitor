@@ -1,3 +1,5 @@
+import { format, subMonths } from 'date-fns';
+import { pt } from 'date-fns/locale';
 
 export interface ElectricityReading {
   date: Date;
@@ -69,11 +71,28 @@ export const formatNumber = (value: number, decimals: number = 2): string => {
   return value.toFixed(decimals);
 };
 
+// Cache for random data to avoid regenerating on every render
+const randomDataCache = new Map<string, number[]>();
+
 export const getRandomData = (length: number, min: number, max: number): number[] => {
-  return Array.from({ length }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+  const cacheKey = `${length}-${min}-${max}`;
+  
+  if (!randomDataCache.has(cacheKey)) {
+    const data = Array.from({ length }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+    randomDataCache.set(cacheKey, data);
+  }
+  
+  return randomDataCache.get(cacheKey) as number[];
 };
 
+// Cache for month names to avoid recalculating
+const monthsCache = new Map<number, string[]>();
+
 export const getLastMonths = (count: number): string[] => {
+  if (monthsCache.has(count)) {
+    return monthsCache.get(count) as string[];
+  }
+  
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const date = new Date();
   const currentMonth = date.getMonth();
@@ -84,5 +103,6 @@ export const getLastMonths = (count: number): string[] => {
     result.push(months[monthIndex]);
   }
   
+  monthsCache.set(count, result);
   return result;
 };

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { memo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import TabsContainer from "@/components/TabsContainer";
@@ -90,4 +90,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default memo(Index);

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Droplet, Zap } from 'lucide-react';
 import ElectricityTab from './ElectricityTab';
@@ -21,21 +21,25 @@ const TabsContainer: React.FC = () => {
         </TabsTrigger>
       </TabsList>
       
-      <TabsContent 
-        value="electricity" 
-        className="animate-fade-in electricity-tab p-6 rounded-lg"
-      >
-        <ElectricityTab />
-      </TabsContent>
+      {activeTab === "electricity" && (
+        <TabsContent 
+          value="electricity" 
+          className="animate-fade-in electricity-tab p-6 rounded-lg"
+        >
+          <ElectricityTab />
+        </TabsContent>
+      )}
       
-      <TabsContent 
-        value="water" 
-        className="animate-fade-in water-tab p-6 rounded-lg"
-      >
-        <WaterTab />
-      </TabsContent>
+      {activeTab === "water" && (
+        <TabsContent 
+          value="water" 
+          className="animate-fade-in water-tab p-6 rounded-lg"
+        >
+          <WaterTab />
+        </TabsContent>
+      )}
     </Tabs>
   );
 };
 
-export default TabsContainer;
+export default memo(TabsContainer);
