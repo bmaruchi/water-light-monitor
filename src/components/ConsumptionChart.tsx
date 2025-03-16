@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getLastMonths, getRandomData } from '@/lib/calculations';
 
@@ -12,10 +12,9 @@ const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
   type = 'electricity',
   months = 6
 }) => {
-  // Usando useMemo para evitar recálculos desnecessários em cada renderização
-  const lastMonths = useMemo(() => getLastMonths(months), [months]);
+  const lastMonths = getLastMonths(months);
   
-  const consumptionData = useMemo(() => {
+  const getConsumptionData = () => {
     const values = type === 'electricity' 
       ? getRandomData(months, 150, 350) 
       : getRandomData(months, 8, 20);
@@ -24,7 +23,7 @@ const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
       name: month,
       consumption: values[index]
     }));
-  }, [type, months, lastMonths]);
+  };
 
   return (
     <div className="w-full h-72 mt-6">
@@ -33,7 +32,7 @@ const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
       </h3>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={consumptionData}
+          data={getConsumptionData()}
           margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
@@ -56,4 +55,4 @@ const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
   );
 };
 
-export default React.memo(ConsumptionChart);
+export default ConsumptionChart;
