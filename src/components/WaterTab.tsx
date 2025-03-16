@@ -27,7 +27,7 @@ const WaterTab: React.FC = () => {
   const [isEditing, setIsEditing] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Carregar valores do localStorage ao inicializar o componente
+  // Load values from localStorage on initialization
   useEffect(() => {
     const savedValuesStr = localStorage.getItem('water_reading_values');
     if (savedValuesStr) {
@@ -75,7 +75,7 @@ const WaterTab: React.FC = () => {
     }
   }, [lastReading]);
 
-  // Função para salvar os valores no localStorage sempre que forem alterados
+  // Save values to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('water_reading_values', JSON.stringify({
       previous_date_reading: previousDate.toISOString(),
@@ -122,6 +122,18 @@ const WaterTab: React.FC = () => {
         consumption: consumptionValue,
         daily_consumption: dailyConsumptionValue,
         estimated_monthly_consumption: estimatedMonthlyConsumptionValue
+      });
+      
+      toast({
+        title: "Leitura salva",
+        description: "Os dados foram salvos com sucesso!"
+      });
+    } catch (error) {
+      console.error("Erro ao salvar leitura:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar os dados."
       });
     } finally {
       setIsSaving(false);

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { CalendarIcon, Save } from "lucide-react";
+
+type FlagType = "green" | "yellow" | "red1" | "red2";
 
 interface ElectricityInputFormProps {
   previousDate: Date;
@@ -19,8 +21,8 @@ interface ElectricityInputFormProps {
   setReading: (reading: string) => void;
   kwhPrice: string;
   setKwhPrice: (price: string) => void;
-  flagType: string;
-  setFlagType: Dispatch<SetStateAction<"green" | "yellow" | "red1" | "red2">>;
+  flagType: FlagType;
+  setFlagType: Dispatch<SetStateAction<FlagType>>;
   publicLighting: string;
   setPublicLighting: (value: string) => void;
   isEditing: boolean;
@@ -29,7 +31,7 @@ interface ElectricityInputFormProps {
   handleConfirmValues: () => void;
   handleEditValues: () => void;
   handleSaveReading: () => void;
-  flagValues: Record<string, { name: string; value: number }>;
+  flagValues: Record<FlagType, { name: string; value: number }>;
 }
 
 const ElectricityInputForm: React.FC<ElectricityInputFormProps> = ({
@@ -169,7 +171,7 @@ const ElectricityInputForm: React.FC<ElectricityInputFormProps> = ({
           id="flag-type"
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           value={flagType}
-          onChange={(e) => setFlagType(e.target.value as "green" | "yellow" | "red1" | "red2")}
+          onChange={(e) => setFlagType(e.target.value as FlagType)}
           disabled={!isEditing}
         >
           {Object.entries(flagValues).map(([key, { name }]) => (

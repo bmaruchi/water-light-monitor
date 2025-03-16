@@ -15,7 +15,9 @@ import ElectricityInputForm from './electricity/ElectricityInputForm';
 import ElectricityResults from './electricity/ElectricityResults';
 import ConsumptionChart from './ConsumptionChart';
 
-const flagValues = {
+type FlagType = "green" | "yellow" | "red1" | "red2";
+
+const flagValues: Record<FlagType, { name: string; value: number }> = {
   green: { name: 'Verde', value: 0 },
   yellow: { name: 'Amarela', value: 0.01874 },
   red1: { name: 'Vermelha - Patamar 1', value: 0.03971 },
@@ -31,14 +33,14 @@ const ElectricityTab: React.FC = () => {
   const [reading, setReading] = useState<string>('');
   const [previousReading, setPreviousReading] = useState<string>('');
   const [kwhPrice, setKwhPrice] = useState<string>('0.70');
-  const [flagType, setFlagType] = useState<keyof typeof flagValues>('green');
+  const [flagType, setFlagType] = useState<FlagType>('green');
   const [publicLighting, setPublicLighting] = useState<string>('35.80');
   
   // State for editing mode
   const [isEditing, setIsEditing] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
-  // Carregar valores do localStorage ao inicializar o componente
+  // Load values from localStorage on initialization
   useEffect(() => {
     const savedValuesStr = localStorage.getItem('electricity_reading_values');
     if (savedValuesStr) {
@@ -59,8 +61,8 @@ const ElectricityTab: React.FC = () => {
         if (savedValues.kwh_price !== undefined) {
           setKwhPrice(savedValues.kwh_price.toString());
         }
-        if (savedValues.flag_type) {
-          setFlagType(savedValues.flag_type as keyof typeof flagValues);
+        if (savedValues.flag_type && Object.keys(flagValues).includes(savedValues.flag_type)) {
+          setFlagType(savedValues.flag_type as FlagType);
         }
         if (savedValues.public_lighting !== undefined) {
           setPublicLighting(savedValues.public_lighting.toString());
@@ -95,8 +97,8 @@ const ElectricityTab: React.FC = () => {
       if (lastReading.kwh_price !== undefined) {
         setKwhPrice(lastReading.kwh_price.toString());
       }
-      if (lastReading.flag_type) {
-        setFlagType(lastReading.flag_type as keyof typeof flagValues);
+      if (lastReading.flag_type && Object.keys(flagValues).includes(lastReading.flag_type)) {
+        setFlagType(lastReading.flag_type as FlagType);
       }
       if (lastReading.public_lighting !== undefined) {
         setPublicLighting(lastReading.public_lighting.toString());
@@ -104,7 +106,7 @@ const ElectricityTab: React.FC = () => {
     }
   }, [lastReading]);
 
-  // Função para salvar os valores no localStorage sempre que forem alterados
+  // Save values to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('electricity_reading_values', JSON.stringify({
       previous_date_reading: previousDate.toISOString(),
@@ -164,6 +166,18 @@ const ElectricityTab: React.FC = () => {
         consumption: consumptionValue,
         daily_consumption: dailyConsumptionValue,
         estimated_cost: estimatedCostValue
+      });
+      
+      toast({
+        title: "Leitura salva",
+        description: "Os dados foram salvos com sucesso!"
+      });
+    } catch (error) {
+      console.error("Erro ao salvar leitura:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar os dados."
       });
     } finally {
       setIsSaving(false);
