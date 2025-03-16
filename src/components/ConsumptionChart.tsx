@@ -1,5 +1,5 @@
 
-import React, { useMemo, memo } from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getLastMonths, getRandomData } from '@/lib/calculations';
 
@@ -12,9 +12,9 @@ const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
   type = 'electricity',
   months = 6
 }) => {
-  const lastMonths = useMemo(() => getLastMonths(months), [months]);
+  const lastMonths = getLastMonths(months);
   
-  const consumptionData = useMemo(() => {
+  const getConsumptionData = () => {
     const values = type === 'electricity' 
       ? getRandomData(months, 150, 350) 
       : getRandomData(months, 8, 20);
@@ -23,14 +23,7 @@ const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
       name: month,
       consumption: values[index]
     }));
-  }, [type, months, lastMonths]);
-
-  const tooltipFormatter = (value: number) => [
-    `${value} ${type === 'electricity' ? 'kWh' : 'm³'}`,
-    'Consumo'
-  ];
-
-  const barFill = type === 'electricity' ? '#F59E0B' : '#3B82F6';
+  };
 
   return (
     <div className="w-full h-72 mt-6">
@@ -39,16 +32,21 @@ const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
       </h3>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={consumptionData}
+          data={getConsumptionData()}
           margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
           <YAxis />
-          <Tooltip formatter={tooltipFormatter} />
+          <Tooltip
+            formatter={(value) => [
+              `${value} ${type === 'electricity' ? 'kWh' : 'm³'}`,
+              'Consumo'
+            ]}
+          />
           <Bar 
             dataKey="consumption" 
-            fill={barFill} 
+            fill={type === 'electricity' ? '#F59E0B' : '#3B82F6'} 
             radius={[4, 4, 0, 0]}
           />
         </BarChart>
@@ -57,4 +55,4 @@ const ConsumptionChart: React.FC<ConsumptionChartProps> = ({
   );
 };
 
-export default memo(ConsumptionChart);
+export default ConsumptionChart;
