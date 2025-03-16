@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Droplet, Zap, TrendingDown, Gauge } from 'lucide-react';
 import { formatNumber, getLastMonths } from '@/lib/calculations';
 import { Button } from '@/components/ui/button';
@@ -46,7 +45,7 @@ const DashboardOverview: React.FC = () => {
     fetchData();
   }, []);
   
-  // Process readings to prepare data for charts
+  // Process readings to prepare data for display
   const processReadings = (readings: any[], type: 'electricity' | 'water') => {
     if (!readings || readings.length === 0) {
       // Return placeholder data if no readings available
@@ -65,7 +64,7 @@ const DashboardOverview: React.FC = () => {
     // Take up to 6 most recent readings
     const recentReadings = sortedReadings.slice(0, 6).reverse();
     
-    // Map readings to chart format
+    // Map readings to data format
     return recentReadings.map(reading => {
       const date = new Date(reading.current_date_reading);
       return {
@@ -148,27 +147,7 @@ const DashboardOverview: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={electricityData}
-                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`${value} kWh`, 'Consumo']} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#F59E0B"
-                    strokeWidth={2} 
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            
             <div className="mt-4 space-y-2">
               <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg">
                 <p className="text-sm text-muted-foreground">Previsão para o mês atual</p>
@@ -207,27 +186,7 @@ const DashboardOverview: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={waterData}
-                  margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`${value} m³`, 'Consumo']} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#3B82F6"
-                    strokeWidth={2} 
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            
             <div className="mt-4 space-y-2">
               <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                 <p className="text-sm text-muted-foreground">Previsão para o mês atual</p>
